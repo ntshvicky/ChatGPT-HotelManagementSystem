@@ -1,0 +1,36 @@
+	<!-- User Management Form -->
+	<div class="form-container" id="user-management">
+		<h2>User Management</h2>
+		<form id="add-user-form">
+			<div class="form-group">
+				<label for="username">Username</label>
+				<input type="text" id="username" name="username" required>
+			</div>
+			<div class="form-group">
+				<label for="password">Password</label>
+				<input type="password" id="password" name="password" required>
+			</div>
+			<div class="form-group">
+				<label for="role">Role</label>
+				<select id="role" name="role">
+					<option value="guest">Guest</option>
+					<option value="admin">Admin</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<button type="submit">Add User</button>
+			</div>
+		</form>
+		<table id="user-table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Username</th>
+					<th>Role</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hotel Management System</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>Check In Guest</h1>
+  <form id="checkin-form">
+    <div>
+      <label for="room-number">Room Number:</label>
+      <input type="number" id="room-number" name="room_number" required>
+    </div>
+    <div>
+      <label for="guest-name">Guest Name:</label>
+      <input type="text" id="guest-name" name="guest_name" required>
+    </div>
+    <div>
+      <label for="checkin-date">Check In Date:</label>
+      <input type="date" id="checkin-date" name="checkin_date" required>
+    </div>
+    <button type="submit">Check In</button>
+  </form>
+
+  <script>
+    $(document).ready(function() {
+      $('#checkin-form').on('submit', function(event) {
+        event.preventDefault();
+        var roomNumber = $('#room-number').val();
+        var guestName = $('#guest-name').val();
+        var checkinDate = $('#checkin-date').val();
+        var data = {
+          'room_number': roomNumber,
+          'guest_name': guestName,
+          'checkin_date': checkinDate
+        };
+        $.ajax({
+          url: '/checkin',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function(response) {
+            alert(response.msg);
+          },
+          error: function(xhr, status, error) {
+            alert(xhr.responseText);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

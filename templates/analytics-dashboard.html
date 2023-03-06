@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hotel Management Dashboard</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-6 mx-auto mt-5">
+				<h1 class="text-center mb-5">Hotel Management Dashboard</h1>
+				<div id="login-form">
+					<div class="form-group">
+						<label for="username">Username:</label>
+						<input type="text" id="username" class="form-control">
+					</div>
+					<div class="form-group">
+						<label for="password">Password:</label>
+						<input type="password" id="password" class="form-control">
+					</div>
+					<button type="button" id="login-btn" class="btn btn-primary btn-block">Login</button>
+				</div>
+				<div id="user-management" class="d-none">
+					<button type="button" id="add-user-btn" class="btn btn-success btn-block mb-3">Add User</button>
+					<table id="user-table" class="table table-striped">
+						<thead>
+							<tr>
+								<th>Username</th>
+								<th>Role</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+				<div id="booking-analytics" class="d-none">
+					<div class="row">
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<h5 class="card-title">Total Bookings</h5>
+									<p class="card-text" id="total-bookings"></p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<h5 class="card-title">Total Revenue</h5>
+									<p class="card-text" id="total-revenue"></p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<h5 class="card-title">Average Price per Booking</h5>
+									<p class="card-text" id="avg-price"></p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row mt-3">
+						<div class="col-md-6">
+							<div class="card">
+								<div class="card-body">
+									<h5 class="card-title">Bookings by Room Type</h5>
+									<canvas id="room-type-chart"></canvas>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="card">
+								<div class="card-body">
+									<h5 class="card-title">Revenue by Month</h5>
+									<canvas id="revenue-chart"></canvas>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<button type="button" id="logout
+                <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+                <script>
+                    $(document).ready(function() {
+                        // Login Form
+                        $('#login-btn').click(function() {
+                            let username = $('#username').val();
+                            let password = $('#password').val();
+                
+                            $.ajax({
+                                url: '/api/login',
+                                method: 'POST',
+                                dataType: 'json',
+                                data: { username: username, password: password },
+                                success: function(response) {
+                                    if (response.status === 'success') {
+                                        localStorage.setItem('token', response.token);
+                                        $('#login-form').addClass('d-none');
+                                        $('#user-management').removeClass('d-none');
+                                        $('#booking-analytics').removeClass('d-none');
+                                        getUserList();
+                                        getBookingAnalytics();
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Oops...',
+                                            text: 'Invalid username or password!'
+                                        });
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    console.log(xhr.responseText);
+                                }
+                            });
+                        });
+                
+                        // Add User Button
+                        $('#add-user-btn').click(function() {
+                            Swal.fire({
+                                title: 'Add User',
+                                html: '<input id="swal-input1" class="swal2-input" placeholder="Username">' +
+                                        '<select id="swal-input2" class="swal2-input">' +
+                                            '<option value="admin">Admin</option>' +
+                                            '<option value="user">User</option>' +
+                                        '</select>' +
+                                        '<input id="swal-input3" class="swal2-input" placeholder="Password">',
+                                showCancelButton: true,
+                                confirmButtonText: 'Add User',
+                                preConfirm: function() {
+                                    let username = $('#swal-input1').val();
+                                    let role = $('#swal-input2').val();
+                                    let password = $('#swal-input3').val();
+                                    return new Promise(function(resolve, reject) {
+                                        if (username === '' || password === '') {
+                                            reject('Please enter all fields!');
+                                        } else {
+                                            resolve({
+                                                username: username,
+                                                role: role,
+                                                password: password
+                                            });
+                                        }
+                                    });
+                                },
+                                allowOutsideClick: false
+                            }).then(function(result) {
+                                if (result.isConfirmed) {
+                                    let token = localStorage.getItem('token');
+                                    $.ajax({
+                                        url: '/api/users',
+                                        method: 'POST',
+                                        dataType: 'json',
+                                        data: result.value,
+                                        headers: { 'Authorization': 'Bearer ' + token },
+                                        success: function(response) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'User Added Successfully!'
+                                            });
+                                            getUserList();
+                                        },
+                                        error: function(xhr, status, error) {
+                                            console.log(xhr.responseText);
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                
+                        // User Table
+                        function getUserList() {
+                            let token = localStorage.getItem('token');
+                            $.ajax({
+                                url: '/api/users',
+                                method: 'GET',
+                                dataType: 'json',
+                                headers: { 'Authorization': 'Bearer ' + token },
+                                success: function(response) {
+                                    let html = '';
+				$.each(response, function(index, user) {
+					html += '<tr>';
+					html += '<td>' + user.id + '</td>';
+					html += '<td>' + user.username + '</td>';
+					html += '<td>' + user.role + '</td>';
+					html += '<td>' + user.created_at + '</td>';
+					html += '<td>' +
+								'<button class="btn btn-danger btn-sm delete-user" data-id="' + user.id + '">' +
+									'<i class="fa fa-trash"></i>' +
+								'</button>' +
+							'</td>';
+					html += '</tr>';
+				});
+				$('#user-table tbody').html(html);
+			},
+			error: function(xhr, status, error) {
+				console.log(xhr.responseText);
+			}
+		});
+	}
+	getUserList();
+
+	// Delete User Button
+	$('#user-table tbody').on('click', '.delete-user', function() {
+		let id = $(this).data('id');
+		Swal.fire({
+			title: 'Are you sure?',
+			text: 'You will not be able to recover this user!',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Yes, delete it!',
+			cancelButtonText: 'No, cancel!',
+			reverseButtons: true
+		}).then(function(result) {
+			if (result.isConfirmed) {
+				let token = localStorage.getItem('token');
+				$.ajax({
+					url: '/api/users/' + id,
+					method: 'DELETE',
+					dataType: 'json',
+					headers: { 'Authorization': 'Bearer ' + token },
+					success: function(response) {
+						Swal.fire({
+							icon: 'success',
+							title: 'User Deleted Successfully!'
+						});
+						getUserList();
+					},
+					error: function(xhr, status, error) {
+						console.log(xhr.responseText);
+					}
+				});
+			}
+		});
+	});
+
+	// Logout Button
+	$('#logout-btn').click(function() {
+		localStorage.removeItem('token');
+		$('#user-management').addClass('d-none');
+		$('#booking-analytics').addClass('d-none');
+		$('#login-form').removeClass('d-none');
+	});
+
+	// Booking Analytics Chart
+	function getBookingAnalytics() {
+		let token = localStorage.getItem('token');
+		$.ajax({
+			url: '/api/booking-analytics',
+			method: 'GET',
+			dataType: 'json',
+			headers: { 'Authorization': 'Bearer ' + token },
+			success: function(response) {
+				let ctx = $('#booking-chart');
+				let chart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: response.labels,
+						datasets: [{
+							label: 'Bookings',
+							data: response.bookings,
+							backgroundColor: 'rgba(255, 99, 132, 0.2)',
+							borderColor: 'rgba(255, 99, 132, 1)',
+							borderWidth: 1,
+							fill: 'start'
+						}]
+					},
+					options: {
+						scales: {
+							yAxes: [{
+								ticks: {
+									beginAtZero: true
+								}
+							}]
+						}
+					}
+				});
+			},
+			error: function(xhr, status, error) {
+				console.log(xhr.responseText);
+			}
+		});
+	}
+	getBookingAnalytics();
+
+	// Show Available Rooms
+	$('#show-available-rooms').click(function() {
+		let checkin_date = $('#checkin-date').val
+        let checkout_date = $('#checkout-date').val();
+		let token = localStorage.getItem('token');
+		$.ajax({
+			url: '/api/rooms/available',
+			method: 'POST',
+			dataType: 'json',
+			headers: { 'Authorization': 'Bearer ' + token },
+			data: {
+				'checkin_date': checkin_date,
+				'checkout_date': checkout_date
+			},
+			success: function(response) {
+				let html = '';
+				$.each(response, function(index, room) {
+					html += '<tr>';
+					html += '<td>' + room.id + '</td>';
+					html += '<td>' + room.name + '</td>';
+					html += '<td>' + room.capacity + '</td>';
+					html += '<td>' + room.price + '</td>';
+					html += '</tr>';
+				});
+				$('#room-table tbody').html(html);
+			},
+			error: function(xhr, status, error) {
+				console.log(xhr.responseText);
+			}
+		});
+	});
+
+	// Show Booked Rooms
+	$('#show-booked-rooms').click(function() {
+		let token = localStorage.getItem('token');
+		$.ajax({
+			url: '/api/rooms/booked',
+			method: 'GET',
+			dataType: 'json',
+			headers: { 'Authorization': 'Bearer ' + token },
+			success: function(response) {
+				let html = '';
+				$.each(response, function(index, room) {
+					html += '<tr>';
+					html += '<td>' + room.id + '</td>';
+					html += '<td>' + room.name + '</td>';
+					html += '<td>' + room.capacity + '</td>';
+					html += '<td>' + room.price + '</td>';
+					html += '<td>' + room.checkin_date + '</td>';
+					html += '<td>' + room.checkout_date + '</td>';
+					html += '<td>' + room.user + '</td>';
+					html += '</tr>';
+				});
+				$('#room-table tbody').html(html);
+			},
+			error: function(xhr, status, error) {
+				console.log(xhr.responseText);
+			}
+		});
+	});
+});
+</script>

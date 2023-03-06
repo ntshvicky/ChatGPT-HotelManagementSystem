@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hotel Management System</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>Check Room Availability</h1>
+  <form id="availability-form">
+    <div>
+      <label for="checkin-date">Check In Date:</label>
+      <input type="date" id="checkin-date" name="checkin_date" required>
+    </div>
+    <div>
+      <label for="checkout-date">Check Out Date:</label>
+      <input type="date" id="checkout-date" name="checkout_date" required>
+    </div>
+    <button type="submit">Check Availability</button>
+  </form>
+
+  <table id="availability-table">
+    <thead>
+      <tr>
+        <th>Room Number</th>
+        <th>Room Type</th>
+        <th>Price</th>
+        <th>Available</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    $(document).ready(function() {
+      $('#availability-form').on('submit', function(event) {
+        event.preventDefault();
+        var checkinDate = $('#checkin-date').val();
+        var checkoutDate = $('#checkout-date').val();
+        var data = {
+          'checkin_date': checkinDate,
+          'checkout_date': checkoutDate
+        };
+        $.ajax({
+          url: '/availability',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function(response) {
+            $('#availability-table tbody').empty();
+            response.rooms.forEach(function(room) {
+              var row = '<tr>' +
+                '<td>' + room.room_number + '</td>' +
+                '<td>' + room.room_type + '</td>' +
+                '<td>' + room.price + '</td>' +
+                '<td>' + room.is_available + '</td>' +
+                '</tr>';
+              $('#availability-table tbody').append(row);
+            });
+          },
+          error: function(xhr, status, error) {
+            alert(xhr.responseText);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

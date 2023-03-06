@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hotel Management System</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>Book a Room</h1>
+  <form id="book-form">
+    <div>
+      <label for="checkin-date">Check In Date:</label>
+      <input type="date" id="checkin-date" name="checkin_date" required>
+    </div>
+    <div>
+      <label for="checkout-date">Check Out Date:</label>
+      <input type="date" id="checkout-date" name="checkout_date" required>
+    </div>
+    <button type="submit">Book</button>
+  </form>
+
+  <script>
+    $(document).ready(function() {
+      $('#book-form').on('submit', function(event) {
+        event.preventDefault();
+        var checkinDate = $('#checkin-date').val();
+        var checkoutDate = $('#checkout-date').val();
+        var data = {
+          'checkin_date': checkinDate,
+          'checkout_date': checkoutDate
+        };
+        $.ajax({
+          url: '/book',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function(response) {
+            alert(response.msg);
+          },
+          error: function(xhr, status, error) {
+            alert(xhr.responseText);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
